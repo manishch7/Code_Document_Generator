@@ -2,12 +2,18 @@ import ast
 import os
 import traceback
 from asttokens import ASTTokens
+from typing import List, Dict, Any
 
-def extract_chunks(source_dir: str):
+def extract_chunks(source_dir: str) -> List[Dict[str, Any]]:
     """
     Walk through .py files under source_dir and extract each
     class/function as a code chunk with metadata.
-    Returns List[dict]: [{'id', 'code', 'metadata'}, ...]
+    
+    Args:
+        source_dir: Directory containing Python files
+        
+    Returns:
+        List of dictionaries with 'id', 'code', and 'metadata' keys
     """
     chunks = []
     print(f"Searching for Python files in: {source_dir}")
