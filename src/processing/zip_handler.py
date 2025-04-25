@@ -10,9 +10,9 @@ ALLOWED_EXTENSIONS = {'.py'}
 # File extensions to explicitly ignore
 IGNORED_EXTENSIONS = {
     # Video files
-    '.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm', '.m4v',
+    '.mp4', '.avi', '.mov', '.flv', '.mkv', '.webm', '.m4v',
     # Image files
-    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp',
+    '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp',
     # Audio files
     '.mp3', '.wav', '.aac', '.flac', '.ogg',
     # Document files (keep .txt for requirements.txt, etc.)
