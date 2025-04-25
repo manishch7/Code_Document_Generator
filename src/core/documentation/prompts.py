@@ -31,7 +31,7 @@ First, carefully analyze the codebase to determine a meaningful project name bas
 - Main modules and their relationships
 - Import statements and dependencies
 
-DO NOT use random characters or generic names. Create a descriptive name that reflects what the project actually does.
+Avoid using random characters or generic names—choose a clear, descriptive name that accurately conveys the purpose of your project.
 
 Then create documentation with these sections:
 
