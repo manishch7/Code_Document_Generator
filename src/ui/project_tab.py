@@ -90,11 +90,17 @@ def process_uploaded_project(uploaded_zip, debug_mode):
                 st.write(project_info['python_files'])
             return
             
-        # Store chunks in session state
+        # Store chunks in session state - both in the general variable and project-specific
         st.session_state.processed_chunks = chunks
+        st.session_state.project_chunks = chunks
         
         # Track available files
         st.session_state.available_files = list(set(chunk['metadata']['file'] for chunk in chunks))
+        st.session_state.project_files = st.session_state.available_files.copy()
+        
+        # Also update selected files for chat to include newly processed files
+        if not st.session_state.selected_project_files:
+            st.session_state.selected_project_files = st.session_state.project_files.copy()
         
         # Upsert chunks to vector database
         status.update(label="Indexing code for search...")

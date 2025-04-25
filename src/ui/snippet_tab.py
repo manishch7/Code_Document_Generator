@@ -11,20 +11,61 @@ def render_snippet_tab():
     )
     
     if st.button("Generate Professional Documentation") and user_code.strip():
-        # Let the enhanced generate.py handle code type inference
-        metadata = {'file': 'user_input', 'name': 'code_snippet', 'type': 'Code'}
+        process_code_snippet(user_code)
+
+def process_code_snippet(user_code):
+    """Process and store the pasted code snippet."""
+    if not user_code.strip():
+        return
         
-        with st.status("Generating professional documentation..."):
-            docs = generate_documentation(user_code, metadata)
+    # Create a unique name for the snippet
+    snippet_count = len(st.session_state.get("snippet_chunks", []))
+    snippet_name = f"snippet_{snippet_count + 1}"
+    
+    # Let the enhanced generate.py handle code type inference
+    metadata = {'file': snippet_name, 'name': 'code_snippet', 'type': 'Code'}
+    
+    with st.status("Generating professional documentation..."):
+        docs = generate_documentation(user_code, metadata)
+        
+        # Create a chunk for this snippet to be available in chat
+        snippet_chunk = {
+            'id': snippet_name,
+            'code': user_code,
+            'metadata': metadata
+        }
+        
+        # Initialize snippet_chunks if it doesn't exist
+        if "snippet_chunks" not in st.session_state:
+            st.session_state.snippet_chunks = []
             
-            # Display documentation with download option
-            st.markdown(docs)
+        # Store the snippet in session state
+        st.session_state.snippet_chunks.append(snippet_chunk)
+        
+        # Initialize snippet_files if it doesn't exist
+        if "snippet_files" not in st.session_state:
+            st.session_state.snippet_files = []
             
-            # Use a professional filename
-            st.download_button(
-                label="Download Documentation",
-                data=docs,
-                file_name="code_documentation.md",
-                mime="text/markdown",
-                key="download_pasted_code"
-            )
+        # Add the snippet file to available files
+        if snippet_name not in st.session_state.snippet_files:
+            st.session_state.snippet_files.append(snippet_name)
+            
+        # Initialize selected_snippet_files if it doesn't exist
+        if "selected_snippet_files" not in st.session_state:
+            st.session_state.selected_snippet_files = []
+            
+        # Add the snippet to selected files for chat
+        if snippet_name not in st.session_state.selected_snippet_files:
+            st.session_state.selected_snippet_files.append(snippet_name)
+        
+        # Display documentation with download option
+        st.markdown(docs)
+        
+        # Use a professional filename
+        st.download_button(
+            label="Download Documentation",
+            data=docs,
+            file_name=f"{snippet_name}_documentation.md",
+            mime="text/markdown",
+            key=f"download_{snippet_name}"
+        )

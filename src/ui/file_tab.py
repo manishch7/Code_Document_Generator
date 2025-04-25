@@ -10,16 +10,15 @@ def render_file_tab():
     """Render the File Documentation tab UI and functionality."""
     st.header("File Documentation")
     
-    # Main area: Upload files (moved from sidebar)
-    st.subheader("Upload Python Files")
+    # Upload files within the main tab area
     uploaded_files = st.file_uploader("Upload Python files", accept_multiple_files=True, type=["py"])
     
     # Process files
     if uploaded_files and st.button("Process Files"):
         process_uploaded_files(uploaded_files)
     
-    # Generate docs for each file
-    if st.session_state.processed_chunks:
+    # Main area: Generate docs for each file
+    if st.session_state.file_chunks:
         st.header("Generate Documentation")
         
         if st.button("Generate Documentation for All Files"):
@@ -29,8 +28,9 @@ def render_file_tab():
         if st.session_state.file_documentation:
             display_file_documentation()
     else:
-        # No files processed yet
-        st.info("Upload Python files and click 'Process Files' to get started, or use the Project Documentation tab to process an entire project ZIP.")
+        # No files processed yet and no uploads
+        if not uploaded_files:
+            st.info("Upload Python files and click 'Process Files' to get started, or use the Project Documentation tab to process an entire project ZIP.")
 
 def process_uploaded_files(uploaded_files):
     """Process uploaded Python files and extract code chunks."""
@@ -43,18 +43,47 @@ def process_uploaded_files(uploaded_files):
         
         # Extract and index chunks
         with st.status("Processing files..."):
-            chunks = extract_chunks(temp_dir)
+            new_chunks = extract_chunks(temp_dir)
             
-            if chunks:
-                # Store chunks in session state
-                st.session_state.processed_chunks = chunks
+            if new_chunks:
+                # Initialize file_chunks if it doesn't exist
+                if 'file_chunks' not in st.session_state:
+                    st.session_state.file_chunks = []
+                    
+                # Initialize uploaded_files if it doesn't exist
+                if 'uploaded_files' not in st.session_state:
+                    st.session_state.uploaded_files = []
                 
-                # Track available files
-                st.session_state.available_files = list(set(chunk['metadata']['file'] for chunk in chunks))
+                # Get existing file names to avoid duplicates
+                existing_files = set(chunk['metadata']['file'] for chunk in st.session_state.file_chunks)
+                
+                # Filter new chunks to avoid duplicates
+                unique_new_chunks = [chunk for chunk in new_chunks 
+                                    if chunk['metadata']['file'] not in existing_files]
+                
+                # Append new chunks to existing chunks
+                st.session_state.file_chunks.extend(unique_new_chunks)
+                
+                # Also update processed_chunks for backward compatibility
+                st.session_state.processed_chunks = st.session_state.file_chunks
+                
+                # Update available files list
+                new_file_names = list(set(chunk['metadata']['file'] for chunk in new_chunks))
+                st.session_state.uploaded_files.extend([f for f in new_file_names if f not in st.session_state.uploaded_files])
+                
+                # Update available_files for backward compatibility 
+                st.session_state.available_files = st.session_state.uploaded_files.copy()
+                
+                # Also update selected files for chat to include newly processed files
+                if 'selected_uploaded_files' not in st.session_state:
+                    st.session_state.selected_uploaded_files = []
+                    
+                st.session_state.selected_uploaded_files.extend([f for f in new_file_names 
+                                                              if f not in st.session_state.selected_uploaded_files])
                 
                 # Upsert chunks to vector database
-                upsert_chunks(chunks)
-                st.success(f"Processed {len(chunks)} code chunks from {len(uploaded_files)} files.")
+                upsert_chunks(unique_new_chunks)
+                st.success(f"Processed {len(new_chunks)} code chunks from {len(uploaded_files)} files.")
             else:
                 st.error("No valid code chunks found in the uploaded files.")
 
@@ -63,7 +92,7 @@ def generate_all_file_documentation():
     with st.status("Generating professional documentation..."):
         # Group chunks by file for better organization
         files = {}
-        for chunk in st.session_state.processed_chunks:
+        for chunk in st.session_state.file_chunks:
             file_name = chunk['metadata']['file']
             if file_name not in files:
                 files[file_name] = []

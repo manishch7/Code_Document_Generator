@@ -22,8 +22,8 @@ The Code Documentation Assistant is an intelligent documentation generator that 
 
 The system uses a combination of:
 
-- **OpenAI's GPT models** for natural language generation
-- **Vector embeddings** to represent code semantically
+- **OpenAI's GPT models** for natural language generation (specifically gpt-4o-mini)
+- **Vector embeddings** (text-embedding-3-small) to represent code semantically
 - **Pinecone vector database** for efficient retrieval of related code
 - **Streamlit frontend** for intuitive user interaction
 
@@ -108,25 +108,63 @@ The system uses a combination of:
 
 ## Project Structure
 
-- `app.py`: Main application entry point
-- `config.py`: Configuration and API key management
-- `src/core/`: Core functionality
-  - `chunker.py`: Code chunking and analysis
-  - `embeddings.py`: Embedding generation and storage
-  - `retriever.py`: Semantic search functionality
-  - `documentation.py`: Documentation generation
-- `src/processing/`: Data processing
-  - `project_analyzer.py`: Project structure analysis
-  - `zip_handler.py`: ZIP file processing
-- `src/ui/`: Streamlit UI components
-  - `project_tab.py`: Project documentation UI
-  - `file_tab.py`: File documentation UI
-  - `snippet_tab.py`: Code snippet UI
-  - `chat_tab.py`: Code chatbot UI
+```
+code_documentation_assistant/
+├── app.py                 # Main application entry point
+├── config.py              # Configuration and API key management
+├── config.ini             # Configuration file for API keys
+├── requirements.txt       # Project dependencies
+├── src/
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── chunker.py     # Code chunking and analysis
+│   │   ├── embeddings.py  # Embedding generation and storage
+│   │   ├── retriever.py   # Semantic search functionality
+│   │   └── documentation/ # Documentation generation components
+│   │       ├── __init__.py
+│   │       ├── code_analyzer.py     # Additional code analysis utilities
+│   │       ├── context_retriever.py # Retrieves relevant code context
+│   │       ├── generator.py         # Documentation generation logic
+│   │       └── prompts.py           # LLM prompts for documentation
+│   ├── processing/
+│   │   ├── __init__.py
+│   │   ├── project_analyzer.py # Project structure analysis
+│   │   └── zip_handler.py      # ZIP file processing
+│   └── ui/
+│       ├── __init__.py
+│       ├── chat_tab.py    # Code chatbot UI
+│       ├── file_tab.py    # File documentation UI
+│       ├── project_tab.py # Project documentation UI
+│       └── snippet_tab.py # Code snippet UI
+```
+
+## Workflow
+
+1. **Initialization**: The system loads configuration from `config.py` and initializes connections to OpenAI and Pinecone
+2. **User Interface**: Streamlit presents four main tabs for different documentation workflows
+3. **Code Processing**:
+   - For projects: ZIP files are extracted, files are parsed into chunks, and embedded in Pinecone
+   - For individual files: Files are parsed, chunked, and embedded
+   - For snippets: Code is analyzed, type-inferred, and documented
+4. **Documentation Generation**: The system:
+   - Retrieves relevant context from the vector database
+   - Applies appropriate documentation prompts based on code type
+   - Generates structured documentation with the LLM
+5. **Interaction**: Users can ask questions about their code using the chatbot interface
+
+## Dependencies
+
+- openai
+- pinecone
+- python-dotenv
+- tqdm
+- streamlit
+- numpy
+- langchain
 
 ## Extensions and Customization
 
-- **Custom Templates**: Modify the documentation templates in `documentation.py`
+- **Custom Templates**: Modify the documentation templates in `prompts.py`
 - **Additional Languages**: Extend the chunker to support other programming languages
 - **Custom LLM**: Replace OpenAI with another model by modifying the API calls
 

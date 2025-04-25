@@ -10,82 +10,148 @@ def render_chat_tab():
     """Render the Code Chatbot tab UI and functionality."""
     st.header("Code Expert Assistant")
     
-    if not st.session_state.processed_chunks:
-        st.warning("Please upload and process files in the File Documentation tab or process a project ZIP first.")
+    # Check if we have any files processed
+    if not st.session_state.get("processed_chunks", []) and not st.session_state.get("project_chunks", []) and not st.session_state.get("file_chunks", []) and not st.session_state.get("snippet_chunks", []):
+        st.warning("Please upload and process files in the File Documentation tab, process a project ZIP, or paste code in the Snippet tab first.")
         return
     
-    # Context selection
-    st.subheader("Select Context Type")
-    context_type = st.selectbox(
-        "Choose context type for the conversation:",
-        ["Entire Project", "Selected Files", "Pasted Code"],
-        index=1  # Default to Selected Files
-    )
+    # Initialize specific chunk categories if they don't exist
+    if "project_chunks" not in st.session_state:
+        st.session_state.project_chunks = []
     
-    if context_type == "Entire Project":
-        # Use all available files for context
-        selected_files = st.session_state.available_files
-        st.success(f"Using all {len(selected_files)} files from the project as context")
+    if "file_chunks" not in st.session_state:
+        st.session_state.file_chunks = []
         
-    elif context_type == "Selected Files":
-        # File selection for context
-        available_files = st.session_state.available_files
-        selected_files = st.multiselect(
-            "Select files to include in the conversation:",
-            available_files,
-            default=st.session_state.selected_files_for_chat
-        )
+    if "snippet_chunks" not in st.session_state:
+        st.session_state.snippet_chunks = []
+    
+    # Track separate file lists for different sources
+    if "project_files" not in st.session_state:
+        st.session_state.project_files = []
+    
+    if "uploaded_files" not in st.session_state:
+        st.session_state.uploaded_files = []
         
-        # Update selected files in session state
-        st.session_state.selected_files_for_chat = selected_files
+    if "snippet_files" not in st.session_state:
+        st.session_state.snippet_files = []
+    
+    # Track selected files for each source
+    if "selected_project_files" not in st.session_state:
+        st.session_state.selected_project_files = []
+    
+    if "selected_uploaded_files" not in st.session_state:
+        st.session_state.selected_uploaded_files = []
         
-        # Check if files are selected
-        if not selected_files:
-            st.warning("Please select at least one file to enable the chatbot.")
-            st.info("Use the multi-select dropdown above to choose which files to include in the conversation.")
+    if "selected_snippet_files" not in st.session_state:
+        st.session_state.selected_snippet_files = []
+    
+    # Update available files lists from chunks
+    available_project_files = list(set(chunk['metadata']['file'] for chunk in st.session_state.project_chunks)) if st.session_state.project_chunks else []
+    available_uploaded_files = list(set(chunk['metadata']['file'] for chunk in st.session_state.file_chunks)) if st.session_state.file_chunks else []
+    available_snippet_files = list(set(chunk['metadata']['file'] for chunk in st.session_state.snippet_chunks)) if st.session_state.snippet_chunks else []
+    
+    # Update session state
+    st.session_state.project_files = available_project_files
+    st.session_state.uploaded_files = available_uploaded_files
+    st.session_state.snippet_files = available_snippet_files
+    
+    # Filter selected files to only include available files (prevent errors)
+    st.session_state.selected_project_files = [f for f in st.session_state.selected_project_files if f in available_project_files]
+    st.session_state.selected_uploaded_files = [f for f in st.session_state.selected_uploaded_files if f in available_uploaded_files]
+    st.session_state.selected_snippet_files = [f for f in st.session_state.selected_snippet_files if f in available_snippet_files]
+    
+    # File selection UI with tabs for different sources
+    st.subheader("Select Files for Context")
+    source_tabs = st.tabs(["Project Files", "Uploaded Files", "Code Snippets", "All Files"])
+    
+    with source_tabs[0]:
+        if available_project_files:
+            st.multiselect(
+                "Select project files:",
+                available_project_files,
+                default=st.session_state.selected_project_files,
+                key="project_files_select"
+            )
+            # Update selected files when widget value changes
+            st.session_state.selected_project_files = st.session_state.project_files_select
+        else:
+            st.info("No project files available. Please upload a project ZIP in the Project Documentation tab.")
+    
+    with source_tabs[1]:
+        if available_uploaded_files:
+            st.multiselect(
+                "Select uploaded files:",
+                available_uploaded_files,
+                default=st.session_state.selected_uploaded_files,
+                key="uploaded_files_select"
+            )
+            # Update selected files when widget value changes
+            st.session_state.selected_uploaded_files = st.session_state.uploaded_files_select
+        else:
+            st.info("No uploaded files available. Please upload individual files in the File Documentation tab.")
+    
+    with source_tabs[2]:
+        if available_snippet_files:
+            st.multiselect(
+                "Select code snippets:",
+                available_snippet_files,
+                default=st.session_state.selected_snippet_files,
+                key="snippet_files_select"
+            )
+            # Update selected files when widget value changes
+            st.session_state.selected_snippet_files = st.session_state.snippet_files_select
+        else:
+            st.info("No code snippets available. Please paste code in the Code Snippet Documentation tab.")
+    
+    with source_tabs[3]:
+        # Combine all available files
+        all_files = list(set(available_project_files + available_uploaded_files + available_snippet_files))
+        
+        # Filter all selected files to only include available files
+        all_selected = [f for f in 
+            list(set(
+                st.session_state.selected_project_files + 
+                st.session_state.selected_uploaded_files +
+                st.session_state.selected_snippet_files
+            )) 
+            if f in all_files
+        ]
+        
+        if all_files:
+            st.multiselect(
+                "Select from all files:",
+                all_files,
+                default=all_selected,
+                key="all_files_select"
+            )
+            # This selection overrides individual selections
+            selected_all = st.session_state.all_files_select
             
-            # Disable chat functionality when no files are selected
-            st.chat_input("Select files above to enable chat...", disabled=True)
-            return
-            
-        st.success(f"Assistant will use context from: {', '.join(selected_files)}")
+            # Update project and uploaded file selections based on all selection
+            st.session_state.selected_project_files = [f for f in selected_all if f in available_project_files]
+            st.session_state.selected_uploaded_files = [f for f in selected_all if f in available_uploaded_files]
+            st.session_state.selected_snippet_files = [f for f in selected_all if f in available_snippet_files]
+        else:
+            st.info("No files available. Please upload files, a project ZIP, or paste code snippets.")
+    
+    # Get all selected files across all sources
+    selected_files = list(set(
+        st.session_state.selected_project_files + 
+        st.session_state.selected_uploaded_files +
+        st.session_state.selected_snippet_files
+    ))
+    
+    # Check if files are selected
+    if not selected_files:
+        st.warning("Please select at least one file to enable the chatbot.")
+        st.info("Use the multi-select dropdowns above to choose which files to include in the conversation.")
         
-    else:  # Pasted Code
-        # Allow user to paste code for context
-        user_code = st.text_area(
-            "Paste your code here for context:", 
-            height=200,
-            placeholder="Paste Python code to use as context for the conversation..."
-        )
-        
-        if not user_code.strip():
-            st.warning("Please paste some code to enable the chatbot.")
-            st.chat_input("Paste code above to enable chat...", disabled=True)
-            return
-            
-        # Create a temporary chunk for the pasted code
-        if user_code.strip():
-            # Only update if there's a change to avoid recreating on every rerun
-            if 'pasted_code' not in st.session_state or st.session_state.pasted_code != user_code:
-                st.session_state.pasted_code = user_code
-                
-                # Infer code type
-                from src.core.documentation.code_analyzer import infer_code_type
-                code_type, code_name = infer_code_type(user_code)
-                
-                # Create a chunk for the pasted code
-                st.session_state.pasted_code_chunk = [{
-                    'id': 'pasted_code',
-                    'code': user_code,
-                    'metadata': {
-                        'file': 'pasted_code.py',
-                        'name': code_name,
-                        'type': code_type
-                    }
-                }]
-                
-            selected_files = ['pasted_code.py']  # Using the pasted code
-            st.success("Using pasted code as context")
+        # Disable chat functionality when no files are selected
+        st.chat_input("Select files above to enable chat...", disabled=True)
+        return
+    
+    # Display selected context
+    st.success(f"Assistant will use context from: {', '.join(selected_files)}")
     
     # Display chat history
     for message in st.session_state.chat_history:
@@ -105,13 +171,9 @@ def render_chat_tab():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Analyzing code..."):
-                # Determine which chunks to use based on context type
-                if context_type == "Pasted Code":
-                    chunks = st.session_state.pasted_code_chunk
-                else:
-                    chunks = st.session_state.processed_chunks
-                
-                response = query_with_context(user_question, chunks, selected_files)
+                # Combine chunks from all sources for selected files
+                all_chunks = st.session_state.project_chunks + st.session_state.file_chunks + st.session_state.snippet_chunks
+                response = query_with_context(user_question, all_chunks, selected_files)
                 st.write(response)
                 
                 # Add assistant response to chat history
