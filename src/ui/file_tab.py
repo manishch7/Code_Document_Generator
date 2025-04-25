@@ -115,7 +115,7 @@ def generate_all_file_documentation():
             st.download_button(
                 label="Download Documentation",
                 data=docs,
-                file_name=f"{os.path.basename(file_name)}_documentation.md",
+                file_name=f"{os.path.basename(file_name)}_documentation.pdf",
                 mime="text/markdown",
                 key=f"download_{file_name}"
             )
@@ -140,7 +140,7 @@ def display_file_documentation():
             st.download_button(
                 label="Download Documentation",
                 data=result['docs'],
-                file_name=f"{os.path.basename(selected_file)}_documentation.md",
+                file_name=f"{os.path.basename(selected_file)}_documentation.pdf",
                 mime="text/markdown",
                 key=f"download_viewer_{selected_file}"
             )
