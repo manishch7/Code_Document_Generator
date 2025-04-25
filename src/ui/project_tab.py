@@ -188,7 +188,7 @@ def display_project_documentation():
         st.download_button(
             label="Download Complete Documentation",
             data=st.session_state.project_documentation,
-            file_name="project_documentation.md",
+            file_name="project_documentation.pdf",
             mime="text/markdown",
             key=f"download_project_docs"
         )
@@ -198,7 +198,7 @@ def display_project_documentation():
             st.download_button(
                 label="Download Project Structure Summary",
                 data=st.session_state.project_summary,
-                file_name="project_structure.md",
+                file_name="project_structure.pdf",
                 mime="text/markdown",
                 key=f"download_project_summary"
             )
