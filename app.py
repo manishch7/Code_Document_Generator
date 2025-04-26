@@ -1,4 +1,8 @@
 import streamlit as st
+
+# First Streamlit command MUST be set_page_config
+st.set_page_config(page_title="Code Documentation Assistant", layout="wide")
+
 import openai
 from config import OPENAI_API_KEY
 
