@@ -5,3 +5,5 @@ tqdm
 streamlit
 numpy
 langchain
+asttokens
+pinecone-client

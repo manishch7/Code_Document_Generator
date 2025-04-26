@@ -1,8 +1,9 @@
 import streamlit as st
 
-# First Streamlit command MUST be set_page_config
+# This MUST be the first streamlit command
 st.set_page_config(page_title="Code Documentation Assistant", layout="wide")
 
+# Import everything else AFTER st.set_page_config
 import openai
 from config import OPENAI_API_KEY
 
@@ -15,8 +16,6 @@ from src.ui.chat_tab import render_chat_tab
 # Initialize OpenAI
 openai.api_key = OPENAI_API_KEY
 
-# Set up the Streamlit page
-st.set_page_config(page_title="Code Documentation Assistant", layout="wide")
 st.title("📄 Code Documentation Assistant")
 
 # Initialize session state variables
@@ -44,7 +43,7 @@ if 'selected_uploaded_files' not in st.session_state:
     st.session_state.selected_uploaded_files = []
 if 'selected_snippet_files' not in st.session_state:
     st.session_state.selected_snippet_files = []
-    
+
 # Initialize file list variables
 if 'available_files' not in st.session_state:
     st.session_state.available_files = []
@@ -63,21 +62,18 @@ if 'project_documentation' not in st.session_state:
 
 # Create tabs for the main interface
 project_tab, doc_tab, code_paste_tab, chat_tab = st.tabs([
-    "Project Documentation", 
-    "File Documentation", 
-    "Code Snippet Documentation", 
+    "Project Documentation",
+    "File Documentation",
+    "Code Snippet Documentation",
     "Code Chatbot"
 ])
 
 # Render each tab with its own module
 with project_tab:
     render_project_tab()
-
 with doc_tab:
     render_file_tab()
-
 with code_paste_tab:
     render_snippet_tab()
-
 with chat_tab:
     render_chat_tab()
