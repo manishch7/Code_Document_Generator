@@ -65,7 +65,7 @@ def process_code_snippet(user_code):
         st.download_button(
             label="Download Documentation",
             data=docs,
-            file_name=f"{snippet_name}_documentation.pdf",
+            file_name=f"{snippet_name}_documentation.md",
             mime="text/markdown",
             key=f"download_{snippet_name}"
         )
