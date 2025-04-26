@@ -12,8 +12,8 @@ from src.ui.chat_tab import render_chat_tab
 openai.api_key = OPENAI_API_KEY
 
 # Set up the Streamlit page
-st.set_page_config(page_title="Professional Code Documentation Assistant", layout="wide")
-st.title("📄 Professional Code Documentation Assistant")
+st.set_page_config(page_title="Code Documentation Assistant", layout="wide")
+st.title("📄 Code Documentation Assistant")
 
 # Initialize session state variables
 if 'processed_chunks' not in st.session_state:
